@@ -1,0 +1,43 @@
+# ---- Build & Production-ready Dockerfile for COI API ----
+# Includes OCR tools: tesseract-ocr + poppler-utils
+
+ARG NODE_VERSION=20
+
+# 1) Dependencies (install dev deps to build)
+FROM node:${NODE_VERSION}-slim AS deps
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/*
+COPY package*.json ./
+RUN npm ci
+
+# 2) Build
+FROM deps AS builder
+WORKDIR /app
+COPY tsconfig.json nest-cli.json ./
+COPY prisma ./prisma
+COPY src ./src
+RUN npx prisma generate
+RUN npm run build
+# Keep only production deps
+RUN npm prune --omit=dev
+
+# 3) Runtime (install OCR tools + dumb-init)
+FROM node:${NODE_VERSION}-slim AS runtime
+ENV NODE_ENV=production
+WORKDIR /app
+# Install OCR tools and helpers
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      tesseract-ocr tesseract-ocr-eng poppler-utils curl dumb-init \
+    && rm -rf /var/lib/apt/lists/*
+# Non-root user
+RUN useradd -m -u 10001 nodeapp
+# Copy artifacts
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+COPY package*.json ./
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s --retries=5 CMD curl -fsS http://localhost:3000/health || exit 1
+USER nodeapp
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "dist/main.js"]

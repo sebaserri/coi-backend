@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.ocr   # o Dockerfile.slim
+      args:
+        - NODE_VERSION=20
+    image: yourorg/coi-api:prod
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    # Si usás proxy reverso, podés quitar ports y usar solo red interna
+    # networks:
+    #   - internal
+
+# networks:
+#   internal:
+#     driver: bridge

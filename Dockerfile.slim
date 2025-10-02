@@ -1,0 +1,32 @@
+# ---- Production Dockerfile (slim, sin OCR) ----
+ARG NODE_VERSION=20
+
+FROM node:${NODE_VERSION}-slim AS deps
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/*
+COPY package*.json ./
+RUN npm ci
+
+FROM deps AS builder
+WORKDIR /app
+COPY tsconfig.json nest-cli.json ./
+COPY prisma ./prisma
+COPY src ./src
+RUN npx prisma generate
+RUN npm run build
+RUN npm prune --omit=dev
+
+FROM node:${NODE_VERSION}-slim AS runtime
+ENV NODE_ENV=production
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends curl dumb-init && rm -rf /var/lib/apt/lists/*
+RUN useradd -m -u 10001 nodeapp
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+COPY package*.json ./
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s --retries=5 CMD curl -fsS http://localhost:3000/health || exit 1
+USER nodeapp
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "dist/main.js"]
