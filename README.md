@@ -16,7 +16,7 @@ npm run prisma:generate
 npm run db:seed
 npx prisma studio
 #npx prisma migrate dev --name init
-npm run start:dev                     # levanta en http://localhost:3000
+npm run start:dev                     # levanta en http://localhost:4000
 ```
 
 -----
@@ -43,7 +43,7 @@ docker run --rm --env-file .env.prod \
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 
 # Healthcheck:
-curl -i http://localhost:3000/health
+curl -i http://localhost:4000/health
 ```
 
 -----
@@ -93,7 +93,7 @@ npm run start:dev
 npx prisma studio
 ```
 
-La API corre en [http://localhost:3000](https://www.google.com/search?q=http://localhost:3000).
+La API corre en [http://localhost:4000](https://www.google.com/search?q=http://localhost:4000).
 
 **Usuarios seed:**
 
@@ -118,8 +118,8 @@ npm install @nestjs/swagger swagger-ui-express
   - Copiá los archivos de configuración sobre tu proyecto API NestJS.
   - Ejecutá `npm run start:dev`.
   - Abrí en tu navegador:
-      - **Swagger UI:** [http://localhost:3000/docs](https://www.google.com/search?q=http://localhost:3000/docs)
-      - **JSON:** [http://localhost:3000/docs-json](https://www.google.com/search?q=http://localhost:3000/docs-json)
+      - **Swagger UI:** [http://localhost:4000/docs](https://www.google.com/search?q=http://localhost:4000/docs)
+      - **JSON:** [http://localhost:4000/docs-json](https://www.google.com/search?q=http://localhost:4000/docs-json)
 
 -----
 
@@ -168,7 +168,7 @@ docker run --rm --env-file .env.prod \
 
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
-curl -i http://localhost:3000/health
+curl -i http://localhost:4000/health
 ```
 
 > El Healthcheck devuelve **200** si DB y S3 están ok (Twilio solo verifica configuración). Si falla algo crítico, devuelve **503**.
@@ -212,11 +212,11 @@ curl -i http://localhost:3000/health
 
 ```bash
 # login
-TOKEN=$(curl -sX POST http://localhost:3000/auth/login -H 'Content-Type: application/json' \
+TOKEN=$(curl -sX POST http://localhost:4000/auth/login -H 'Content-Type: application/json' \
   -d '{"email":"admin@example.com","password":"password123"}' | jq -r .access_token)
 
 # crear solicitud (reemplazá BID/VID)
-curl -sX POST http://localhost:3000/coi/requests \
+curl -sX POST http://localhost:4000/coi/requests \
  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
  -d '{"buildingId":"<BID>","vendorId":"<VID>","ttlHours":168}'
 # te devuelve { token, expiresAt } → URL del front: /requests/<token>
@@ -227,7 +227,7 @@ curl -sX POST http://localhost:3000/coi/requests \
 ### Aprobar un COI
 
 ```bash
-curl -X PATCH http://localhost:3000/cois/<COI_ID>/approve \
+curl -X PATCH http://localhost:4000/cois/<COI_ID>/approve \
  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
  -d '{"notes":"OK AI + Waiver","flags":{"additionalInsured":true,"waiverOfSubrogation":true}}'
 ```
@@ -238,7 +238,7 @@ curl -X PATCH http://localhost:3000/cois/<COI_ID>/approve \
 
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
- "http://localhost:3000/access/check?vendorId=<VID>&buildingId=<BID>"
+ "http://localhost:4000/access/check?vendorId=<VID>&buildingId=<BID>"
 ```
 
 -----

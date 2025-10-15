@@ -178,7 +178,7 @@ export class AuthService {
         expiresAt: addHours(48),
       },
     });
-    const base = process.env.PUBLIC_APP_URL || "http://localhost:3000";
+    const base = process.env.PUBLIC_APP_URL || "http://localhost:4000";
     const link = `${base}/(auth)/verify-email?token=${t.token}`;
     await this.email.send(
       email,
@@ -240,7 +240,7 @@ export class AuthService {
           expiresAt: addHours(2),
         },
       });
-      const base = process.env.PUBLIC_APP_URL || "http://localhost:3000";
+      const base = process.env.PUBLIC_APP_URL || "http://localhost:4000";
       const link = `${base}/(auth)/reset-password?token=${t.token}`;
       await this.email.send(
         email,

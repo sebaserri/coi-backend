@@ -13,9 +13,9 @@ services:
       - .env.prod
     environment:
       NODE_ENV: production
-      PORT: 3000
+      PORT: 4000
     ports:
-      - "3000:3000"
+      - "4000:4000"
     # Si usás proxy reverso, podés quitar ports y usar solo red interna
     # networks:
     #   - internal
