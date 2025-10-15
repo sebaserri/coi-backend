@@ -16,10 +16,13 @@ import { RequirementsModule } from "./requirements/requirements.module";
 import { SecurityModule } from "./security/security.module";
 import { UsersModule } from "./users/users.module";
 import { VendorsModule } from "./vendors/vendors.module";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([{ ttl: 10, limit: 10 }]),
     HealthModule,
     PrismaModule,
     AuthModule,
@@ -37,5 +40,6 @@ import { VendorsModule } from "./vendors/vendors.module";
     ExtractModule,
     SecurityModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

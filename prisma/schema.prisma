@@ -26,100 +26,105 @@ enum FileKind {
 }
 
 model User {
-  id        String  @id @default(cuid())
-  email     String  @unique
-  password  String
-  name      String?
-  role      Role
-  vendorId  String?
-  vendor    Vendor? @relation(fields: [vendorId], references: [id])
-  createdAt DateTime @default(now())
+  id              String         @id @default(cuid())
+  email           String         @unique
+  password        String
+  name            String?
+  role            Role
+  vendorId        String?
+  vendor          Vendor?        @relation(fields: [vendorId], references: [id])
+  tokens          AuthToken[]    @relation("UserTokens")
+  refreshTokens   RefreshToken[] @relation("UserRefreshTokens")
+  emailVerifiedAt DateTime?
+  createdAt       DateTime       @default(now())
+
+  @@index([emailVerifiedAt])
 }
 
 model Building {
-  id        String   @id @default(cuid())
-  name      String
-  address   String
+  id           String                @id @default(cuid())
+  name         String
+  address      String
   requirements RequirementTemplate[]
-  cois        COI[]
-  coiRequests  CoiRequest[]   
-  createdAt DateTime @default(now())
+  cois         COI[]
+  coiRequests  CoiRequest[]
+  createdAt    DateTime              @default(now())
 }
 
 model RequirementTemplate {
-  id           String   @id @default(cuid())
-  buildingId   String
-  building     Building @relation(fields: [buildingId], references: [id])
-  generalLiabMin       Int?
-  autoLiabMin          Int?
-  workersCompRequired  Boolean @default(true)
-  umbrellaMin          Int?
+  id                    String   @id @default(cuid())
+  buildingId            String
+  building              Building @relation(fields: [buildingId], references: [id])
+  generalLiabMin        Int?
+  autoLiabMin           Int?
+  workersCompRequired   Boolean  @default(true)
+  umbrellaMin           Int?
   additionalInsuredText String?
   certificateHolderText String
-  active               Boolean @default(true)
+  active                Boolean  @default(true)
 
   @@unique([buildingId, active])
 }
 
 model Vendor {
-  id           String  @id @default(cuid())
+  id           String       @id @default(cuid())
   legalName    String
   contactEmail String
   contactPhone String?
   users        User[]
   cois         COI[]
   coiRequests  CoiRequest[]
-  createdAt DateTime @default(now())
+  createdAt    DateTime     @default(now())
 }
 
 model COI {
-  id         String  @id @default(cuid())
+  id         String   @id @default(cuid())
   vendorId   String
-  vendor     Vendor  @relation(fields: [vendorId], references: [id])
+  vendor     Vendor   @relation(fields: [vendorId], references: [id])
   buildingId String
   building   Building @relation(fields: [buildingId], references: [id])
 
-  producer        String?
-  insuredName     String?
-  generalLiabLimit Int?
-  autoLiabLimit    Int?
-  workersComp      Boolean?
-  umbrellaLimit    Int?
-  additionalInsured Boolean?
+  producer            String?
+  insuredName         String?
+  generalLiabLimit    Int?
+  autoLiabLimit       Int?
+  workersComp         Boolean?
+  umbrellaLimit       Int?
+  additionalInsured   Boolean?
   waiverOfSubrogation Boolean?
-  certificateHolder String?
-  effectiveDate    DateTime?
-  expirationDate   DateTime?
+  certificateHolder   String?
+  effectiveDate       DateTime?
+  expirationDate      DateTime?
 
-  status          COIStatus @default(PENDING)
-  notes           String?
-  files           COIFile[]
+  status COIStatus @default(PENDING)
+  notes  String?
+  files  COIFile[]
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([buildingId, status])
   @@index([expirationDate])
 }
 
 model COIFile {
-  id      String @id @default(cuid())
-  coiId   String
-  coi     COI    @relation(fields: [coiId], references: [id])
-  url     String
-  kind    FileKind
+  id    String   @id @default(cuid())
+  coiId String
+  coi   COI      @relation(fields: [coiId], references: [id])
+  url   String
+  kind  FileKind
 }
 
 model CoiRequest {
-  id         String   @id @default(cuid())
-  token      String   @unique
+  id         String    @id @default(cuid())
+  token      String    @unique
   buildingId String
-  building   Building @relation(fields: [buildingId], references: [id])
+  building   Building  @relation(fields: [buildingId], references: [id])
   vendorId   String
-  vendor     Vendor   @relation(fields: [vendorId], references: [id])
+  vendor     Vendor    @relation(fields: [vendorId], references: [id])
   expiresAt  DateTime
   usedAt     DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   @@index([buildingId, vendorId])
 }
@@ -127,8 +132,8 @@ model CoiRequest {
 model NotificationLog {
   id    String   @id @default(cuid())
   coiId String
-  kind  String   // e.g., "SMS_EXPIRY"
-  tag   String   // "D30" | "D15" | "D7"
+  kind  String // e.g., "SMS_EXPIRY"
+  tag   String // "D30" | "D15" | "D7"
   at    DateTime @default(now())
 
   @@unique([coiId, kind, tag])
@@ -136,32 +141,61 @@ model NotificationLog {
 
 model AuditLog {
   id       String   @id @default(cuid())
-  entity   String   // "COI"
+  entity   String // "COI"
   entityId String
-  action   String   // "REVIEW.APPROVED" | "REVIEW.REJECTED"
+  action   String // "REVIEW.APPROVED" | "REVIEW.REJECTED"
   actorId  String
   details  String?
   at       DateTime @default(now())
+
   @@index([entity, entityId])
 }
 
- model BrokerInbox {
-   id         String   @id @default(cuid())
-   source     String   // "EMAIL" | "SFTP" | "API"
-   externalId String?  // message-id / file path / api-id
-   vendorId   String?
-   buildingId String?
-   status     String   // "RECEIVED"|"PARSED"|"ATTACHED"|"ERROR"
-   meta       Json?
-   at         DateTime @default(now())
-   @@index([source, externalId])
- }
+model BrokerInbox {
+  id         String   @id @default(cuid())
+  source     String // "EMAIL" | "SFTP" | "API"
+  externalId String? // message-id / file path / api-id
+  vendorId   String?
+  buildingId String?
+  status     String // "RECEIVED"|"PARSED"|"ATTACHED"|"ERROR"
+  meta       Json?
+  at         DateTime @default(now())
 
- model BuildingIntegration {
-   id         String  @id @default(cuid())
-   buildingId String
-   kind       String  // "ACCESS_WEBHOOK" | "ACCESS_API"
-   url        String?
-   apiKey     String?
-   active     Boolean @default(true)
- }
+  @@index([source, externalId])
+}
+
+model BuildingIntegration {
+  id         String  @id @default(cuid())
+  buildingId String
+  kind       String // "ACCESS_WEBHOOK" | "ACCESS_API"
+  url        String?
+  apiKey     String?
+  active     Boolean @default(true)
+}
+
+model AuthToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation("UserTokens", fields: [userId], references: [id], onDelete: Cascade)
+  kind      String // 'EMAIL_VERIFY' | 'PWD_RESET'
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, kind])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation("UserRefreshTokens", fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  userAgent String?
+  ip        String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}

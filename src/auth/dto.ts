@@ -14,3 +14,20 @@ export class LoginDto {
   @ApiProperty() @MinLength(6) password: string;
 }
 export class AuthToken { @ApiProperty() access_token: string; }
+
+export class ForgotPasswordDto {
+  @ApiProperty() email: string;
+}
+
+export class ResetPasswordDto {
+  @ApiProperty() token: string;
+  @ApiProperty() password: string;
+}
+
+export class VerifyEmailDto {
+  @ApiProperty() token: string;
+}
+
+export class ResendVerificationDto {
+  @ApiProperty() email: string;
+}

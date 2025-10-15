@@ -1,6 +1,5 @@
-// prisma/seed.ts
 import { PrismaClient, Role, COIStatus, FileKind } from "@prisma/client";
-import * as argon from "argon2";
+import { hash as argonHash } from "@node-rs/argon2";
 import { randomBytes } from "crypto";
 
 const prisma = new PrismaClient();
@@ -34,11 +33,13 @@ async function main() {
   await prisma.requirementTemplate.create({
     data: {
       building: { connect: { id: b1.id } },
-      certificateHolderText: "Sunset Towers HOA, 123 Ocean Ave, Miami, FL 33139",
+      certificateHolderText:
+        "Sunset Towers HOA, 123 Ocean Ave, Miami, FL 33139",
       generalLiabMin: 1_000_000,
       autoLiabMin: 500_000,
       umbrellaMin: 1_000_000,
-      additionalInsuredText: "Property Manager must be listed as Additional Insured.",
+      additionalInsuredText:
+        "Property Manager must be listed as Additional Insured.",
       workersCompRequired: true,
       active: true,
     },
@@ -59,7 +60,8 @@ async function main() {
   await prisma.requirementTemplate.create({
     data: {
       building: { connect: { id: b2.id } },
-      certificateHolderText: "Downtown Plaza Assoc., 987 Main St, Austin, TX 78701",
+      certificateHolderText:
+        "Downtown Plaza Assoc., 987 Main St, Austin, TX 78701",
       generalLiabMin: 2_000_000,
       autoLiabMin: 1_000_000,
       umbrellaMin: 2_000_000,
@@ -86,10 +88,17 @@ async function main() {
   });
 
   // ---------- Users ----------
-  const password = await argon.hash("password123");
+  const password = await argonHash("password123");
+
   await prisma.user.create({
-    data: { email: "admin@example.com", password, role: Role.ADMIN, name: "Admin" },
+    data: {
+      email: "admin@example.com",
+      password,
+      role: Role.ADMIN,
+      name: "Admin",
+    },
   });
+
   await prisma.user.create({
     data: {
       email: "vendor1@example.com",
@@ -99,8 +108,14 @@ async function main() {
       name: "Vendor One",
     },
   });
+
   await prisma.user.create({
-    data: { email: "guard@example.com", password, role: Role.GUARD, name: "Guard" },
+    data: {
+      email: "guard@example.com",
+      password,
+      role: Role.GUARD,
+      name: "Guard",
+    },
   });
 
   // ---------- COIs (varios estados y fechas) ----------

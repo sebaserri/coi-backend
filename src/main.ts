@@ -3,20 +3,47 @@ import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { PrismaService } from "./prisma/prisma.service";
-import * as bodyParser from 'body-parser';
-import { RawBodyMiddleware } from './middlewares/raw-body.middleware';
+import * as bodyParser from "body-parser";
+import helmet from "helmet";
+import * as cookieParser from "cookie-parser";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true, rawBody: true, });
+  const app = await NestFactory.create(AppModule, {
+    cors: true,
+    rawBody: true,
+  });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  app.use(bodyParser.json({
-    verify: (req: any, _res, buf) => { req.rawBody = buf; },
-  }));
-  app.use(bodyParser.urlencoded({
-    extended: true,
-    verify: (req: any, _res, buf) => { req.rawBody = buf; },
-  }));
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+    })
+  );
+  app.use(cookieParser());
+
+  app.use(
+    bodyParser.json({
+      verify: (req: any, _res, buf) => {
+        req.rawBody = buf;
+      },
+    })
+  );
+  app.use(
+    bodyParser.urlencoded({
+      extended: true,
+      verify: (req: any, _res, buf) => {
+        req.rawBody = buf;
+      },
+    })
+  );
+
+  app.enableCors({
+    origin: process.env.PUBLIC_APP_URL || "http://localhost:3000",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
+    exposedHeaders: [],
+  });
 
   const prismaService = app.get(PrismaService);
   await prismaService.enableShutdownHooks(app);
